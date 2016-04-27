@@ -1,30 +1,87 @@
 angular.module('starter.services')
 
-  .factory('facebookEvents', function($q, $http, $filter) {
+  .factory('facebookEvents', function($q, $http, $filter, $ionicPlatform, $cordovaFacebook) {
 
     //TODO: change development to production
-    var baseUrl = "http://10.0.0.138:15000/";
+    var baseUrl = "https://nosolo-web-admin.herokuapp.com/";
 
     // Some fake testing data
     var activities = undefined;
+    var places = undefined;
 
     // Get Events from Facebook
-    var getFacebookEvents = function(query){
+    var getFacebookEvents = function (query) {
       var fetchEvents = $q.defer();
 
-      // Fetch events by query
+      if (window.cordova) {
+        $cordovaFacebook.getLoginStatus()
+          .then(function(success) {
+              $cordovaFacebook.api(
+                "/search?q=" + query + "&type=event&want_localized_name=true&limit=5000&fields=id,name,owner,description,location,venue,privacy,start_time,end_time,updated_time,is_date_only,cover")
+                .then(function (response) {
+                  if (response && !response.error) {
+                    console.log('facebookEventsService - getFacebookEvents response - success', response.data);
+                    fetchEvents.resolve(response.data);
+                  }
+                  else {
+                    console.log('facebookEventsService - getFacebookEvents response - error', response);
+                  }
+                })
+          }, function (error) {
+            alert('failed')
+          });
+      }
+      else {
+        FB.api(
+          "/search?q=" + query + "&type=event&want_localized_name=true&limit=5000&fields=id,name,owner,description,location,venue,privacy,start_time,end_time,updated_time,is_date_only,cover",
+          function (response) {
+            if (response && !response.error) {
+              console.log('facebookEventsService - getFacebookEvents response - success', response.data);
+              fetchEvents.resolve(response.data);
+            }
+            else {
+              console.log('facebookEventsService - getFacebookEvents response - error', response);
+            }
+          }
+        );
+      }
+
+      return fetchEvents.promise;
+    };
+
+    var getFacebookPlacesByLocation = function(location){
+      var fetchEvents = $q.defer();
+
+      // Fetch events by location
       FB.api(
-        "/search?q="+query+"&type=event&want_localized_name=true&limit=5000&fields=id,name,owner,description,location,venue,privacy,start_time,end_time,updated_time,is_date_only,cover",
+        "/search?limit=5000&type=place&q=*&center=31.258889%2C34.799708&distance=300&fields=id,name",
         function (response) {
           if (response && !response.error) {
-            console.log('facebookEventsService - getFacebookEvents response - success');
+            console.log('getFacebookEventsByLocation - getFacebookEvents response - success', response.data);
+            //mapPlacesToQueryList(response.data);
             fetchEvents.resolve(response.data);
           }
           else {
-            console.log('facebookEventsService - getFacebookEvents response - error', response);
+            console.log('getFacebookEventsByLocation - getFacebookEvents response - error', response);
           }
         }
       );
+
+      return fetchEvents.promise;
+    };
+
+    var mapPlacesToQueryList = function(placesIds){
+      var fetchEvents = $q.defer();
+      var placesIdsList = [];
+
+      // Map placesIds object-array to string-array
+      angular.forEach(placesIds, function(value, key){
+        placesIdsList.push(value.name);
+      });
+
+      fetchEvents.resolve(placesIdsList);
+
+
 
       return fetchEvents.promise;
     };
@@ -34,7 +91,7 @@ angular.module('starter.services')
 
       var filteredEvents;
 
-      filteredEvents = $filter('filter')(events, {privacy: 'OPEN', venue: {city: 'Tel Aviv'} });
+      //filteredEvents = $filter('filter')(events, {privacy: 'OPEN', venue: {city: 'Tel Aviv'} });
 
       filteredEvents = $filter('eventsFilter')(filteredEvents, {privacy: 'OPEN', venue: {city: 'Tel Aviv'} });
 
@@ -57,15 +114,16 @@ angular.module('starter.services')
           // Remove tokens
           var title = convertToPlain(value.name);
           var creatorName = convertToPlain(value.owner.name);
+          console.log('creatorName',creatorName);
           var description = convertToPlain(value.description);
 
           value.description = typeof value.description === "object" ? "" : value.description;
 
           activity = {
-            "title": "title",
+            "title": title,
             "creator": {
               "_id": value.owner.id,
-              "name": 'name'
+              "name": creatorName
             },
             "fbId": value.id,
             "date": {
@@ -77,7 +135,7 @@ angular.module('starter.services')
               value.venue.latitude
             ],
             "imageUrl": value.cover.source,
-            "description": "",
+            "description": description,
 
             "invitees": [],
             "isApprovalNeeded": false,
@@ -179,7 +237,7 @@ angular.module('starter.services')
       console.log("facebookEventsService - postEvents - Activities List", activities.length, activities);
 
       //// TODO: get route from ignat
-      $http.post(baseUrl+'create_fb_activities', JSON.stringify(activities))
+      return $http.post(baseUrl+'create_fb_activities', JSON.stringify(activities))
         .success(function(data, status, headers, config){
           if(data.result == "success"){
             console.log('create_events - post: SUCCESS', status, data);
@@ -196,6 +254,8 @@ angular.module('starter.services')
 
     return {
       getFacebookEvents: getFacebookEvents,
+      getFacebookPlacesByLocation: getFacebookPlacesByLocation,
+      mapPlacesToQueryList: mapPlacesToQueryList,
       filterEvents: filterEvents,
       mapEventsToActivities: mapEventsToActivities,
       resizeEventsImages: resizeEventsImages,

@@ -5,24 +5,38 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'starter.filters'])
+angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'starter.filters', 'ngCordova'])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform,$state) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
 
+    $ionicPlatform.on("deviceready", function() {
+      facebookConnectPlugin.getLoginStatus(function(response){
+        if(response.status === 'connected'){
+          console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS',response);
 
-    facebookConnectPlugin.browserInit('466269356751173');
-    facebookConnectPlugin.getLoginStatus(function(response){
-      if(response.status === 'connected'){
-        console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS',response);
-
-      }else{
-        console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
-
-      }
+        }else{
+          console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
+          $state.go("login");
+        }
+      });
     });
+
+    if(!window.cordova) {
+      facebookConnectPlugin.browserInit('466269356751173');
+      facebookConnectPlugin.getLoginStatus(function (response) {
+        if (response.status === 'connected') {
+          console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS', response);
+          $state.go("login");
+        } else {
+          console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
+          alert('go to login');
+          $state.go("login");
+        }
+      });
+    }
 
     if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
@@ -43,6 +57,12 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
   // Set up the various states which the app can be in.
   // Each state's controller can be found in controllers.js
   $stateProvider
+
+    .state('login', {
+      url: '/login',
+      templateUrl: 'templates/login.html',
+      controller: 'LoginCtrl'
+    })
 
   // setup an abstract state for the tabs directive
     .state('tab', {
