@@ -9,6 +9,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 
 .run(function($ionicPlatform,$state) {
   $ionicPlatform.ready(function() {
+<<<<<<< HEAD
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
 
@@ -21,6 +22,18 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
           $state.go("login");
         }
       });
+=======
+
+    facebookConnectPlugin.browserInit('466269356751173');
+    facebookConnectPlugin.getLoginStatus(function(response){
+      if(response.status === 'connected'){
+        console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS',response);
+
+      }else{
+        console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
+
+      }
+>>>>>>> 73c5210cb8f0d2780300888fe8f26e23721c0dfd
     });
 
     if(!window.cordova) {
