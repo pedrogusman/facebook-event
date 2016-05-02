@@ -16,7 +16,6 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
       facebookConnectPlugin.getLoginStatus(function(response){
         if(response.status === 'connected'){
           console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS',response);
-
         }else{
           console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
           $state.go("login");
@@ -30,6 +29,11 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
         if (response.status === 'connected') {
           console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: SUCCESS', response);
           $state.go("login");
+          facebookConnectPlugin.api(
+                            "/me/events", null,
+                            function (response) {
+                                console.info('response', response);
+                            })
         } else {
           console.log('app.run - ionicPlatform.ready - facebookConnectPlugin.getLoginStatus: ERROR', response);
           alert('go to login');
