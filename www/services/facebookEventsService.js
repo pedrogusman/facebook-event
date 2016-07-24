@@ -9,6 +9,24 @@ angular.module('starter.services')
     var activities = undefined;
     var places = undefined;
 
+    fetchEvents function(){
+        var userEvents = $q.defer();
+
+        facebookConnectPlugin.api(
+            "/me/events", null,
+            function (response) {
+                console.info('response', response);
+                if(response && !response.error){
+                    userEvents.resolve(response.data);
+                }
+                else {
+                    userEvents.reject(response);
+                }
+            })
+
+        return userEvents.promise;
+    }
+
     // Get Events from Facebook
     var getFacebookEvents = function (query) {
       var fetchEvents = $q.defer();
@@ -253,6 +271,8 @@ angular.module('starter.services')
     };
 
     return {
+      fetchEvents: fetchEvents,
+
       getFacebookEvents: getFacebookEvents,
       getFacebookPlacesByLocation: getFacebookPlacesByLocation,
       mapPlacesToQueryList: mapPlacesToQueryList,
